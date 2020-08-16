@@ -1,38 +1,72 @@
-.App {
-  text-align: center;
+.fade-enter{
+    opacity: 0;
+    transition: all 40000ms ease-out;
+    transform: translateX(200px);
+}
+.fade-exit{
+    opacity: 0;
+    transition: all 40000ms ease-out;
+    transform: translateX(200px);
+}
+.fade-enter-active{
+    opacity: 0;
+    transition: all 40000ms ease-out;
+    transform: translateX(200px);
+}
+.fade-exit-active{
+    opacity: 0;
+    transition: all 40000ms ease-out;
+    transform: translateX(200px);
+}
+.fade-enter-active,
+.fade-exit-active{
+    opacity: 0.5;
+    transition: all 400ms ease-out;
+    position: absolute;
+    transform: translateX(100%)
+}
+.my-node-enter {
+    opacity: 1;
+    transition: all 400ms ease-out;
+    transform: translateX(200px);
+}
+.my-node-enter-active {
+    opacity: 1;
+    transition: all 400ms ease-out;
+    transform: translateX(200px);
+}
+.my-node-exit {
+
+    transition: all 400ms ease-out;
+    transform: translateX(200px);
+}
+.my-node-exit-active {
+
+    transition: all 400ms ease-out;
+    transform: translateX(200px);
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.item-enter {
+    opacity: 0;
+    transition: all 400ms ease-out;
+    position: relative;
+    transform: translateX(-50%)
 }
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.item-enter-active {
+    opacity: 0.5;
+    transition: all 400ms ease-out;
+    position: relative;
+    transform: translateX(100%)
 }
+.item-exit {
+    position: absolute;
+    opacity: 0;
+    transform: translateX(0%)
 
-.App-link {
-  color: #61dafb;
 }
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.item-exit-active {
+    position: absolute;
+    opacity: 0;
+    transform: translateX(-50%)
 }
