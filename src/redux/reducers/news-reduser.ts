@@ -1,4 +1,15 @@
-import {f1, get, getList, getNewsCurrentUserList, getNewses, liked, likes, updateNewses} from "../../api";
+import {
+    addNews,
+    get,
+    getList,
+    getNewsCurrentUserList,
+    getNewses,
+    liked,
+    likes,
+    updateNewses,
+    comment,
+    setComment, deleteComment
+} from "../../api";
 
 
 let GET_NEWS_CATEGORIES_LIST = "GET_NEWS_CATEGORIES_LIST"
@@ -7,6 +18,11 @@ let SET_CURENT_ID = "SET_CURENT_ID"
 let GET_SINGLE_NEWS = "GET_SINGLE_NEWS"
 let GET_ALL_NEWS = "GET_ALL_NEWS"
 let GET_LIKED_NEWS = "GET_LIKED_NEWS"
+let SUCCESS = "SUCCESS"
+let COMMENT = "COMMENT"
+let SET_COMMENT = "SET_COMMENT"
+let LOADING = "LOADING"
+let DELL_COMMENT = "DELL_COMMENT"
 
 
 export type newsCategoryListType = {
@@ -15,12 +31,19 @@ export type newsCategoryListType = {
 
 }
 
+type comment = {
+    body: string
+    userId: string
+}
+
 type newsType = {
     id: any
     title: string
     categoriesid: string
     prevue: string
     likes: Array<string>
+
+
 }
 let initialState = {
     newsCategoryList: [] as Array<newsCategoryListType>,
@@ -28,7 +51,10 @@ let initialState = {
     categoriesid: '' as string,
     singleNews: [] as Array<newsType>,
     newsAll: [] as Array<newsType>,
-    likedNews: [] as Array<newsType>
+    likedNews: [] as Array<newsType>,
+    success: false,
+    comments: [] as Array<comment>,
+    loading:false
 }
 
 const newsRedus = (state = initialState, action: any) => {
@@ -63,6 +89,40 @@ const newsRedus = (state = initialState, action: any) => {
                 ...state,
                 likedNews: action.likedNews
             }
+        case SUCCESS:
+            return {
+                ...state,
+                success: true
+            }
+        case COMMENT:
+            return {
+                ...state,
+                comments: action.comments
+            }
+
+            case LOADING:
+            return {
+                ...state,
+                loading: action.loading
+            }
+
+        case SET_COMMENT:
+            return  Object.assign({}, state, {
+                comments: [
+                    action.comments,
+                    ...state.comments,
+
+
+                ]
+            })
+        case DELL_COMMENT:
+            return {
+                ...state,
+                ...state.comments.filter((item:any) => !action.commentId.includes(item.id))
+            }
+
+
+
         default:
             return state
     }
@@ -86,6 +146,14 @@ type getNewsType = {
 }
 
 export let getNews = (news: newsType): getNewsType => ({type: GET_NEWS, news})
+
+export let getComments = (comments: any) => ({type: COMMENT, comments})
+
+export let setLoading = (loading: boolean) => ({type: LOADING, loading})
+
+export let setComments = (comments: any) => ({type: SET_COMMENT, comments})
+
+export let deleteComments = (commentId: any) => ({type: SET_COMMENT, commentId})
 
 type getLikedNewstype = {
     type: typeof GET_LIKED_NEWS
@@ -114,23 +182,24 @@ type singleNewsType = {
 export let singleNews = (singleNews: any): singleNewsType => ({type: GET_SINGLE_NEWS, singleNews})
 
 
+export let setSuccess = () => ({type: SUCCESS})
+
+
 export let getNewsCategoryListThunk = () => (dispatch: any) => {
     get("categories_list")
         .then((res) => {
-            // console.log(res)
             dispatch(newsCategoryList(res))
         })
 }
 
-export let getListThunk = (categoryId: any) => (dispatch: any) => {
-    getList("News", categoryId)
+export let getListThunk = (whereId: any, categoryId: any, limit: number) => (dispatch: any) => {
+    getList(whereId, "News", categoryId, limit)
         .then(res => dispatch(getNews(res)))
 }
 
-export let getNewsThunk = (newsNameId: any) => (dispatch: any) => {
-    getNewses("News", newsNameId)
+export let  getNewsThunk = (newsNameId: any) =>  (dispatch: any) => {
+   getNewses("News", newsNameId)
         .then(res => (
-            // console.log(res),
             dispatch(singleNews(res)))
         )
 }
@@ -144,28 +213,31 @@ export let getNewsCurrentUserListThunk = (CurrentUserId: any) => (dispatch: any)
 export let getNewsAllListThunk = () => (dispatch: any) => {
     get("News",)
         .then(res => (
-            // console.log(res),
             dispatch(getAllNews(res))))
 }
 
 export let updateNewsThunk = (newsNameId: any, data: any, imgSrc: any) => () => {
-    console.log("Thunk", data)
-    console.log("Thunk", newsNameId)
-    console.log("Thunk", imgSrc)
     updateNewses("News", newsNameId, data, imgSrc)
-        .then((res) => {
-                // console.log(res)
+        .then(() => {
                 console.log("ThunkSucces")
             }
         )
 }
 
-export let Likes = (doc: any, arrayUnion: any, add: any) => (dispatch: any) => {
-    likes("News", doc, arrayUnion, add)
-    getNewsThunk(doc)
+export let Likes =  (doc: any, arrayUnion: any, add: any) => async  (dispatch: any) => {
+
+   await likes("News", doc, arrayUnion, add)
+        dispatch(getNewsThunk(doc)
+
+
+)
 }
-export let AddNews = (d: any, imgSrc: any) => (dispatch: any) => {
-    f1(d, imgSrc).then(r => console.log(r))
+export let AddNews = (news: any, imgSrc: any) => (dispatch: any) => {
+    addNews(news, imgSrc).then(r => {
+        dispatch(setSuccess())
+        console.log(r)
+
+    })
 
 }
 
@@ -176,6 +248,28 @@ export let getLiked = (uid: any) => (dispatch: any) => {
         }
     )
 }
+export let getCommentThunk = (newsId: any , limit:number) => (dispatch: any) => {
+    comment(newsId, limit).then(r =>
+        dispatch(getComments(r)),
+    )
+}
+
+export let setCommentThunk = (newsId: any, data: any) => (dispatch: any) => {
+    setComment(newsId, data).then(() => {
+            dispatch(setComments(data))
+        }
+    )
+}
+export let deleteCommentThunk = (newsId: any, commentId: any , limit: number) => (dispatch: any) => {
+
+    deleteComment(newsId, commentId).then(r => {
+            console.log(r, "respons")
+        // dispatch(deleteComments(commentId))
+        dispatch(getCommentThunk(newsId , limit))
+        }
+    )
+}
+
 
 export default newsRedus
 

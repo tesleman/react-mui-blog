@@ -2,12 +2,10 @@ import React, {useEffect} from "react";
 import {
     Avatar, Container,
     createStyles, Grid,
-    IconButton,
     MenuItem,
     MenuList,
     Paper,
     Theme,
-    Toolbar,
     Typography
 } from "@material-ui/core";
 import {AppStateType} from "../redux/redux";
@@ -20,7 +18,7 @@ import {getLiked, getNewsCurrentUserListThunk} from "../redux/reducers/news-redu
 import {Link} from "react-router-dom";
 import CastomCard from "../FeaturedPost/Card";
 import Add from "../Add/AddNews";
-import {liked} from "../api";
+
 
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -102,7 +100,10 @@ export let SelfCard: React.FC<any> = (props) => {
                                 title={n.title}
                                 prevue={n.prevue}
                                 likes={n.likes}
-                                imageSrc={n.imageSrc}/>
+                                imageSrc={n.imageSrc}
+                                user={props.user}
+
+                    />
                 )) : ''}
 
             </Grid>
@@ -159,8 +160,8 @@ let Profile: React.FC<any> = (props) => {
                 <Switch>
                 <Route path="/Profile/MyProfile"  render={() => <Avatarka user={props.user}/>}/>
                 <Route path="/Profile/Edit" component={Edit}/>
-                <Route path="/Profile/MyCard" render={() => <SelfCard news={props.news}/>}/>
-                    <Route path="/Profile/LikeCard" render={() => <SelfCard news={props.liked}/>}/>
+                <Route path="/Profile/MyCard" render={() => <SelfCard user={props.user} news={props.news}/>}/>
+                    <Route path="/Profile/LikeCard" render={() => <SelfCard user={props.user} news={props.liked}/>}/>
                 <Route exact path="/Profile/Add" component={Add}/>
                 </Switch>
             </Grid>

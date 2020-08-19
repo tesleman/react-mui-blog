@@ -1,7 +1,7 @@
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import React, {useContext, useEffect} from 'react';
 import './App.css';
 import Header from "./Header/Header";
-import {CircularProgress, Container, Grid} from "@material-ui/core";
+import {CircularProgress, Container} from "@material-ui/core";
 import {connect} from "react-redux";
 import {categoriesid, getNewsCategoryListThunk, newsCategoryListType} from "./redux/reducers/news-reduser";
 import {AppStateType} from "./redux/redux";
@@ -66,8 +66,10 @@ const Main: React.FC<RouteComponentProps<RouteProps> & any> = (props) => {
                 <Route exact path="/" component={Start}/>
                 <Route exact path="/Login" component={Login}/>
                 <Route exact path="/Registration" component={Registration}/>
+                <Route  exact path="/AuthorNews/:AuthorId/" component={FeaturedPos}/>
                 <Route path="/news/:id/" component={News}/>
-                <Route path="/:listId/" component={FeaturedPos}/>
+                <Route exact path="/:listId/" component={FeaturedPos}/>
+
             </Switch>
         </animated.div>
     ))

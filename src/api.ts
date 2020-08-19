@@ -28,8 +28,8 @@ export function get(collection: any) {
 
 }
 
-export function getList(collection: any, categoryId: any) {
-    return db.collection(collection).where("categoriesid", "==", categoryId)
+export function getList(whereId:any,collection: any, categoryId: any, limit:number) {
+    return db.collection(collection).where(whereId, "==", categoryId).limit(limit)
         .get()
         .then(querySnapshot => {
             let news: any = querySnapshot.docs.map(m => ({
@@ -62,19 +62,17 @@ export function getNewses(collection: any, newsNameId: any) {
     return db.collection(collection).doc(newsNameId)
         .get()
         .then(response => {
-
             let news = {
                 id: newsNameId,
                 ...response.data()
             }
-
             return news
         })
 
 }
 
 export async function updateNewses(collection: any, newsNameId: any, data: any, imgSrc: any) {
-    // console.log(imgSrc)
+
     let colect = db.collection(collection).doc(newsNameId)
         .update({
             ...data
@@ -141,7 +139,7 @@ export async function curentUser() {
 
 export function f() {
     let user = firebase.auth().currentUser
-    // console.log(user)
+
 
     if (user != null) user.updateProfile({
         displayName: "Jane Q. User",
@@ -154,30 +152,33 @@ export function f() {
     })
 }
 
-export function likes(collection: any, doc: any, arrayUnion: any, add: any) {
-    let washingtonRef = db.collection(collection).doc(doc);
-    add ? washingtonRef.update({
+export async function  likes(collection: any, doc: any, arrayUnion: any, add: any) {
+    let washingtonRef = await db.collection(collection).doc(doc);
+    add ? await washingtonRef.update({
             likes: firebase.firestore.FieldValue.arrayUnion(arrayUnion)
-        }).then(r => console.log(r)) :
-        washingtonRef.update({
+        }).then(r => console.log(r, " Union LikeResponse")).catch( (error)=>console.log(error) ) :
+        await washingtonRef.update({
             likes: firebase.firestore.FieldValue.arrayRemove(arrayUnion)
-        });
+        }).then(r => console.log(r, " Remove LikeResponse")).catch( (error)=>console.log(error) )
 
 }
 
-export async function f1(d: any, imgSrc: any) {
-    console.log(d)
+export async function addNews(News: any, imgSrc: any) {
+
     let addNews = await db.collection('News').add({
         imageSrc: '',
-        ...d
+        ...News
     })
-    // console.log(addNews)
-    let fileData = await firebase.storage().ref(`records/${addNews.id}`).put(imgSrc)
-    let imageSrc = await fileData.ref.getDownloadURL();
-    // console.log(imageSrc)
-    await db.collection('News').doc(`${addNews.id}`).update({
-        imageSrc
-    })
+    if(imgSrc) {
+        let fileData = await firebase.storage().ref(`records/${addNews.id}`).put(imgSrc)
+        let imageSrc = await fileData.ref.getDownloadURL();
+        // console.log(imageSrc)
+        await db.collection('News').doc(`${addNews.id}`).update({
+            imageSrc
+        })
+
+    }
+return addNews
 
 }
 
@@ -196,6 +197,47 @@ export async function liked(uid: any) {
             }));
             return news
         })
+}
 
 
+export async function author(authorId: any) {
+    return await db.collection("users").where("userId", "==", authorId)
+        .get()
+}
+export async function authors() {
+    return await db.collection("users")
+        .get() .then(response => {
+
+          let mm:any =  response.docs.map(m => ({
+                ...m.data()
+            }));
+            console.log(mm, "mm")
+          return mm
+        })
+}
+
+export async function comment(newsId:any, limit: number) {
+    if(newsId !==null && newsId !== undefined)
+ return  await db.collection("News").doc(newsId).collection("Comments").orderBy("data", "desc").limit(limit).get()
+       .then( r => {
+           let news:any = r.docs.map(m => ({
+               id: m.id,
+               ...m.data()
+           }));
+
+           return news
+       })
+
+
+}
+
+export async function setComment(newsId:any, data:any){
+
+    await db.collection("News").doc(newsId).collection("Comments").doc().set({
+        ...data,
+    }).then(r => console.log(r, "responsAPI"))
+
+}
+export async function deleteComment(newsId:any, commentId:any){
+    await db.collection("News").doc(newsId).collection("Comments").doc(commentId).delete().then(r => console.log(r, "responsAPI"))
 }

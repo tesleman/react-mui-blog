@@ -1,9 +1,13 @@
-import {auth, curentUser, f, initAuth, reg, signOut} from "../../api";
-import firebase from "firebase";
+import {auth, author, authors, curentUser, initAuth, reg, signOut} from "../../api";
 
 
 let SET_USER = "SET_USER"
 let SET_LOADING = "SET_LOADING"
+let SET_AUTHOR = "SET_AUTHOR"
+let SET_AUTHORS = "SET_AUTHORS"
+let SET_LOADING_AUTH = "SET_LOADING_AUTH"
+let SET_AUTH_ERROR = "SET_AUTH_ERROR"
+
 
 let initialState = {
     user: {
@@ -11,7 +15,17 @@ let initialState = {
         name: "",
         photoURL: ""
     },
-    loading: true
+    loading: true,
+    loadingAuth: false,
+    author: {
+        name: "",
+        photoURL: "",
+        userId: ""
+    },
+    authorsstate: [] as Array<any>,
+    error: ""
+
+
 }
 
 const user = (state = initialState, action: any) => {
@@ -21,10 +35,32 @@ const user = (state = initialState, action: any) => {
                 ...state,
                 user: action.user
             }
+        case SET_AUTHOR:
+            return {
+                ...state,
+                author: action.author
+            }
+        case SET_AUTHORS:
+            return Object.assign({}, state, {
+                authorsstate: [
+                    ...state.authorsstate,
+                    ...action.authorsstate
+                ]
+            })
         case SET_LOADING:
             return {
                 ...state,
                 loading: action.loading
+            }
+        case SET_LOADING_AUTH:
+            return {
+                ...state,
+                loadingAuth: action.loadingAuth
+            }
+        case SET_AUTH_ERROR:
+            return {
+                ...state,
+                error: action.error
             }
 
         default:
@@ -36,9 +72,21 @@ let setCurrentUser = (user: any) => ({
     type: SET_USER,
     user
 })
+let setAuthor = (author: any) => ({
+    type: SET_AUTHOR,
+    author
+})
+let setAuthors = (authorsstate: any) => ({
+    type: SET_AUTHORS,
+    authorsstate
+})
 let setLoading = (loading: boolean) => ({
     type: SET_LOADING,
     loading
+})
+let setLoadingAuth = (loadingAuth: boolean) => ({
+    type: SET_LOADING_AUTH,
+    loadingAuth
 })
 
 export let currentUserThunk = () => async (dispatch: any) => {
@@ -54,15 +102,36 @@ export let currentUserThunk = () => async (dispatch: any) => {
 }
 
 export let getCurrentUserThunk = () => (dispatch: any) => {
-    return initAuth((user: any) => {
+    return initAuth(() => {
         dispatch(currentUserThunk())
     })
 }
+export let getAuthor = (id: any) => async (dispatch: any) => {
+    author(id)
+        .then(response => {
+            response.docs.forEach(m => {
+                dispatch(setAuthor(m.data()))
+            });
+        })
+}
+export let getAuthorsThunk = () => async (dispatch: any) => {
+    authors()
+        .then(response =>
+            dispatch(setAuthors(response))
+        )
+}
 
 export let loginThunk = (login: any, password: any) => async (dispatch: any) => {
-    let t = await auth(login, password)
+    try {
+        dispatch(setLoadingAuth(true))
+        let t = await auth(login, password)
+        dispatch(setLoadingAuth(false))
+        dispatch(setCurrentUser({id: t.user.uid, name: t.user.displayName, photoURL: t.user.photoURL}))
+    } catch (e) {
+        console.log(e)
+    }
 
-    dispatch(setCurrentUser({id: t.user.uid, name: t.user.displayName, photoURL: t.user.photoURL}))
+
 }
 export let logoutThunk = () => async (dispatch: any) => {
     await signOut()
@@ -70,8 +139,7 @@ export let logoutThunk = () => async (dispatch: any) => {
 }
 
 
-
-export let registrationThunk =  (login: any, password: any, name:string) => async (dispatch:any)=>{
+export let registrationThunk = (login: any, password: any, name: string) => async () => {
 
     let ss = await reg(login, password, name).catch(function (error) {
         let errorCode = error.code;
@@ -81,7 +149,7 @@ export let registrationThunk =  (login: any, password: any, name:string) => asyn
         return error
         // An error happened.
     })
-   console.log(ss + "ss")
+    console.log(ss + "ss")
 
 
 }

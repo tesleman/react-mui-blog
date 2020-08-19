@@ -1,18 +1,34 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {RouteComponentProps, withRouter} from "react-router";
 import {AppStateType} from "../redux/redux";
 import {compose} from "redux";
 import {connect} from "react-redux";
-import {getListThunk, getNewsThunk, Likes} from "../redux/reducers/news-reduser";
+import {
+    getCommentThunk,
+    getListThunk,
+    getNewsThunk,
+    Likes,
+    setCommentThunk
+} from "../redux/reducers/news-reduser";
 import {makeStyles} from "@material-ui/core/styles";
-import {Badge, Grid, Link, Paper, Typography} from "@material-ui/core";
+import {
+    Avatar,
+    Badge,
+    Button,
+    Grid,
+    IconButton,
+    Paper,
+    TextareaAutosize,
+    Typography
+} from "@material-ui/core";
 import FavoriteIcon from '@material-ui/icons/Favorite';
 import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
-import {CSSTransition, SwitchTransition} from "react-transition-group";
+import {getAuthor, getAuthorsThunk} from "../redux/reducers/user";
+import {NavLink} from "react-router-dom";
 
-type PathParamsType = {
-    id: string
-}
+import Comment from "./CommentItem";
+
+
 const useStyles = makeStyles((theme) => ({
     mainFeaturedPost: {
         position: 'relative',
@@ -43,53 +59,133 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-let News: React.FC<RouteComponentProps<PathParamsType> & any> = (props) => {
+let News: React.FC<RouteComponentProps<any> & any> = (props) => {
     let classes = useStyles()
-    const [inProp, setInProp] = useState(false);
-    const [likeUpd, setLikeUpd] = useState('');
+    const [limit, setLikeUpd] = useState(2);
+    const [commentState, setCommentState] = useState('');
+
+
+    let memo = useCallback(() => props.getAuthorsThunk(), [props.authorsstate.length])
+
+
+    useEffect(() => {
+        memo()
+    }, [])
+
+
+    useEffect(() => {
+        props.getCommentThunk(props.match.params.id, limit)
+        console.log(props.comment)
+    }, [props.singleNews.id, limit, props.comment.length])
+
     useEffect(() => {
         props.getNewsThunk(props.match.params.id)
-        // console.log(props)
-        setInProp(true)
-    }, [likeUpd])
- // console.log(props)
+    }, [props.match.params.id])
+
+    useEffect(() => {
+        if (props.singleNews.userId)
+            props.getAuthor(props.singleNews.userId)
+    }, [props.singleNews.userId])
+console.log(props.comment)
+
+    let onHandleSubmit = () => {
+        let date = new Date()
+        let data = {
+            body: commentState,
+            userId: props.user.id,
+            data: date.toLocaleString(),
+        }
+        props.setCommentThunk(props.singleNews.id, data)
+    }
+
     let likes = (add: any) => {
         props.Likes(props.singleNews.id, props.user.id, add)
-        setLikeUpd(props.singleNews.likes)
     }
-    // console.log(props.singleNews)
-    // console.log(props.user)
-    //  console.log(props.match)
+
+
     return (
+        <div>
+            <Paper className={classes.mainFeaturedPost}>
+                <div className={classes.overlay}/>
+                <Grid container>
+                    <Grid item md={6}>
+                        <div className={classes.mainFeaturedPostContent}>
+                            <Typography component="h1" variant="h3" color="inherit" gutterBottom>
+                                {props.singleNews.title}
+                            </Typography>
+                            <Typography variant="h5" color="inherit" paragraph>
+                                {props.singleNews.prevue}
+                            </Typography>
 
-        // <CSSTransition mode={"in-out"} in={inProp} timeout={200} classNames="my-node">
-            <div>
-                <Paper className={classes.mainFeaturedPost}>
-                    <div className={classes.overlay}/>
-                    <Grid container>
-                        <Grid item md={6}>
-                            <div className={classes.mainFeaturedPostContent}>
-                                <Typography component="h1" variant="h3" color="inherit" gutterBottom>
-                                    {props.singleNews.title}
-                                </Typography>
-                                <Typography variant="h5" color="inherit" paragraph>
-                                    {props.singleNews.prevue}
-                                </Typography>
-                                {props.singleNews.likes ? (props.singleNews.likes.find((i: string) => i == props.user.id) ?
-                                    <Badge style={{cursor: "pointer"}} onClick={() => {
-                                        likes(false)
-                                    }} badgeContent={props.singleNews.likes.length} color="primary">
-                                        <FavoriteIcon/>
-                                    </Badge> : <Badge style={{cursor: "pointer"}} onClick={() => likes(true)}
-                                                      badgeContent={props.singleNews.likes.length}
-                                                      color="primary"><FavoriteBorderIcon/> </Badge>) : ''}
-                            </div>
-                        </Grid>
+                            {props.singleNews.likes ? (props.singleNews.likes.some((i: string) => i === props.user.id) ?
+                                <Badge style={{cursor: "pointer"}} onClick={() => likes(false)}
+                                       badgeContent={props.singleNews.likes.length} color="primary">
+                                    <FavoriteIcon/>
+                                </Badge> : <Badge style={{cursor: "pointer"}} onClick={() => likes(true)}
+                                                  badgeContent={props.singleNews.likes.length}
+                                                  color="primary"><FavoriteBorderIcon/>
+                                </Badge>) : console.log("else Budg")}
+
+                        </div>
                     </Grid>
-                </Paper>
 
-            </div>
-        // </CSSTransition>
+                    <Grid
+                        item md={1}
+                        style={{
+                            marginLeft: "auto",
+                            marginTop: "auto"
+                        }}>
+
+                        <NavLink to={"/AuthorNews/" + props.author.userId}>
+                            <IconButton>
+                                <Avatar alt="Cindy Baker" src={props.author.photo}/>
+                            </IconButton>
+                        </NavLink>
+                        <Typography style={{
+                            color: "white"
+                        }} variant="subtitle2" color="inherit" paragraph>
+                            {props.author.name}
+                        </Typography>
+
+                    </Grid>
+
+                </Grid>
+
+
+            </Paper>
+            {props.user.id ? <form onSubmit={
+                (event) => {
+                    event.preventDefault()
+                    onHandleSubmit()
+                }
+            }>
+                <Grid item md={5}>
+                    <Grid item md={5}>
+                        <TextareaAutosize onChange={((event) => setCommentState(event.target.value))}
+                                          aria-label="empty textarea" rowsMin={3} placeholder="Empty"/>
+                    </Grid>
+                    <Grid item md={5}>
+                        <Button disabled={!commentState} type={"submit"}> Submit</Button>
+
+
+                    </Grid>
+                </Grid>
+            </form> : ""}
+            {props.comment && props.authorsstate ? props.comment.map((r: any) => (
+                <Comment
+                    newsId={props.match.params.id}
+                    limit={limit}
+                    authorId={r.userId}
+                    body={r.body}
+                    data={r.data}
+                    id={r.id}
+                    key={r.data}
+                    author={props.authorsstate.find((i: any) => i.userId == r.userId)}
+                />
+            )) : ""}
+
+            <Button disabled={limit > props.comment.length} onClick={() => setLikeUpd(limit + 1)}>More</Button>
+        </div>
 
 
     )
@@ -100,9 +196,22 @@ let News: React.FC<RouteComponentProps<PathParamsType> & any> = (props) => {
 let mapStateToProps = (state: AppStateType) => {
     return {
         singleNews: state.news.singleNews,
-        user: state.user.user
+        user: state.user.user,
+        author: state.user.author,
+        comment: state.news.comments,
+        authorsstate: state.user.authorsstate,
+        loading: state.news.loading
     }
 }
 export default compose<React.ComponentType>(
     withRouter,
-    connect(mapStateToProps, {getListThunk, getNewsThunk, Likes}))(News);
+    connect(mapStateToProps, {
+        getListThunk,
+        getNewsThunk,
+        Likes,
+        getAuthor,
+        getCommentThunk,
+        setCommentThunk,
+        getAuthorsThunk,
+
+    }))(News);

@@ -43,7 +43,11 @@ const Header: React.FC<RouteComponentProps<RouteProps>& any> = (props) => {
     return (
         <React.Fragment>
             <Toolbar>
-                <Button size="small">Subscribe</Button>
+                {props.user.id ? <Link to={"/Profile/MyProfile"}>
+                    <IconButton>
+                        <Avatar alt="Cindy Baker" src={props.user.photoURL}/>
+                    </IconButton>
+                </Link> : ""}
                 <Typography
                     component="h2"
                     variant="h5"
@@ -54,11 +58,7 @@ const Header: React.FC<RouteComponentProps<RouteProps>& any> = (props) => {
                 >
                     {props.user.name}
                 </Typography>
-                {props.user.id ? <Link to={"/Profile"}>
-                    <IconButton>
-                        <Avatar alt="Cindy Baker" src={props.user.photoURL}/>
-                    </IconButton>
-                </Link> : ""}
+
 
                     {props.user.id ? <div> <Link style={{textDecoration: "none"}} to={"/Login"}>
                   <div>  <Button onClick={props.logoutThunk} variant="outlined" size="small">
@@ -85,10 +85,7 @@ const Header: React.FC<RouteComponentProps<RouteProps>& any> = (props) => {
         </React.Fragment>
     );
 }
-type propTypes = {
-    newsCategoryList: any,
-    categoriesid: (categoriesid:any) => void
-};
+
 
 let mapStateToProps = (state:AppStateType) =>{
   return   {

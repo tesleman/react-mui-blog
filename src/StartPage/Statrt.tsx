@@ -16,7 +16,6 @@ textAlign:"center"
 
 let Start = (props:any) => {
     let classes = useStyles()
-    // console.log(props.user)
    if( !props.user.id) return <Redirect to={"/Login"}/>
     return (<div  >
         <Avatar  className={classes.margin} alt="Cindy Baker" src={props.user.photoURL}/>

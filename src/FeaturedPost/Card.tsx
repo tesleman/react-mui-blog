@@ -1,8 +1,9 @@
-import React from "react";
+import React  from "react";
 import {Badge, Card, CardActionArea, CardContent, CardMedia, Grid, Hidden, Typography} from "@material-ui/core";
-import {Link, NavLink} from "react-router-dom";
+import {Link} from "react-router-dom";
 import FavoriteBorderIcon from "@material-ui/icons/FavoriteBorder";
 import {makeStyles} from "@material-ui/core/styles";
+import FavoriteIcon from "@material-ui/icons/Favorite";
 
 
 
@@ -40,12 +41,21 @@ const useStyles = makeStyles((theme) => ({
             backgroundRepeat: 'no-repeat',
             backgroundPosition: 'center',
         },
+    hearthWhite: {
+        color: "white",
+        marginTop: 15
+    },
+    hearthDark:{
+        color: "black",
+        marginTop: 15
+    }
 
     }))
 ;
 
 let CastomCard:React.FC<any> = ( props) => {
-    const classes = useStyles();
+    const classes = useStyles()
+
   return  <Grid style={{
         margin: 5,
         width: "90%"
@@ -64,13 +74,15 @@ let CastomCard:React.FC<any> = ( props) => {
                     </CardContent>
                     <Hidden xsDown>
                         <CardMedia className={classes.cardMedia}
-                                   image={props.imageSrc} title={props.title} > <Badge
-                            style={{
-                                color: "white",
-                                marginTop: 15
-                            }}
-                            badgeContent={props.likes.length}
-                            color="primary"><FavoriteBorderIcon/> </Badge></CardMedia>
+                                   image={props.imageSrc} title={props.title} >
+                            {props.user ? (props.likes.find((i: string) => i == props.user.id) ?
+                                <Badge className={props.imageSrc ? classes.hearthWhite: classes.hearthDark}  badgeContent={props.likes.length} color="primary">
+                                    <FavoriteIcon/>
+                                </Badge> : <Badge
+                                    className={props.imageSrc ? classes.hearthWhite: classes.hearthDark}
+                                    badgeContent={props.likes.length}
+                                                  color="primary"><FavoriteBorderIcon/> </Badge>):""}
+                           </CardMedia>
                     </Hidden>
                 </Card>
             </CardActionArea>

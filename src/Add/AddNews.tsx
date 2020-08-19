@@ -7,17 +7,16 @@ import {
     Select,
     TextareaAutosize,
     TextField,
-    Theme, withStyles,
+    withStyles,
 } from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
 import {connect} from "react-redux";
 import {Redirect, RouteComponentProps} from "react-router";
 import {AppStateType} from "../redux/redux";
 import {AddNews} from "../redux/reducers/news-reduser";
-import {Simulate} from "react-dom/test-utils";
 
 
-const useStyles = makeStyles((theme: Theme) =>
+const useStyles = makeStyles(() =>
     createStyles({
         root: {
             display: 'flex',
@@ -64,9 +63,13 @@ let Add: React.FC<RouteComponentProps<any>> = (props: any) => {
 
 
     useEffect(() => {
+
+        if (props.success) {
+            clear()
+        }
         if (props.categories.length > 0)
             setSelect(props.categories[0].id)
-    }, [props.categories.length])
+    }, [props.categories.length, props.success])
 
     let handleSelectChangeCategory = (value: any) => {
         setSelect(value)
@@ -92,7 +95,8 @@ let Add: React.FC<RouteComponentProps<any>> = (props: any) => {
             categoriesid: select,
             title: title,
             prevue: textarea,
-            likes: []
+            likes: [],
+            userId: props.user.id
         }
         props.AddNews(formData, file)
     }
@@ -104,6 +108,7 @@ let Add: React.FC<RouteComponentProps<any>> = (props: any) => {
         setSelect('')
         setTitle('')
         setTextarea('')
+        clearImg()
     }
 
 
@@ -113,7 +118,7 @@ let Add: React.FC<RouteComponentProps<any>> = (props: any) => {
     return (!props.user.id ? <Redirect to={"/Login"}/> : <form onSubmit={event => {
             event.preventDefault()
             handleSubmit()
-            clear()
+
         }
         } className={style.root}>
 
@@ -148,17 +153,18 @@ let Add: React.FC<RouteComponentProps<any>> = (props: any) => {
                 ria-label="minimum height" rowsMin={2}
                 placeholder="Annotation"/>
             {!src ? <Button
-                variant="contained"
-                component="label"
-                className={margin}
-            >
-                Upload File
-                <input
-                    type="file"
-                    style={{display: "none"}}
-                    onChange={handleFileChange}
-                />
-            </Button> : <div><img src={src} alt='#'/> <Button onClick={clearImg}>Clear</Button></div>}
+                    variant="contained"
+                    component="label"
+                    className={margin}
+                >
+                    Upload File
+                    <input
+                        type="file"
+                        style={{display: "none"}}
+                        onChange={handleFileChange}
+                    />
+                </Button> :
+                <div><img style={{maxHeight: 250}} src={src} alt='#'/> <Button onClick={clearImg}>Clear</Button></div>}
 
             <Button disabled={!title} type="submit" variant="contained"> submit</Button>
 
@@ -169,7 +175,8 @@ let Add: React.FC<RouteComponentProps<any>> = (props: any) => {
 let mapStateTooProps = (state: AppStateType) => {
     return {
         categories: state.news.newsCategoryList,
-        user: state.user.user
+        user: state.user.user,
+        success: state.news.success
     }
 }
 

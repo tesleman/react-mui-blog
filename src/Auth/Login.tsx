@@ -1,17 +1,12 @@
 import React, {useState} from "react";
-import {InjectedFormProps, reduxForm, Field} from "redux-form";
 import {connect} from "react-redux";
 import {AppStateType} from "../redux/redux";
 import {loginThunk} from "../redux/reducers/user";
-import {Button, Grid, MenuItem, TextField} from "@material-ui/core";
-import {renderField} from "../forms/formField";
+import {Button, Grid, TextField} from "@material-ui/core";
 import {Redirect} from "react-router";
 import {Link} from "react-router-dom";
 
-// type FormType ={
-//     email: string
-//     password: any
-// }
+
 
 
 
@@ -21,9 +16,7 @@ let Login = (props: any) => {
  let  [login, setLogin] = useState('')
  let  [password, setPassword] = useState('')
     let sub = (login: any, password:any) => {
-
         props.loginThunk(login, password)
-       // console.log(login, password )
     }
 
 
@@ -72,11 +65,11 @@ let Login = (props: any) => {
                         fullWidth
                         variant="contained"
                         color="primary"
+                        disabled={props.loading}
                     >
                         Sign Up
                     </Button>
                 </Grid>
-
                 <Grid item xs={2}>
                     <Link style={{color: "black", textDecoration: "none",  marginLeft:15}} to={"/Registration"}>
                         Registration
@@ -90,7 +83,8 @@ let Login = (props: any) => {
 
 let mapStateToProps = (state: AppStateType) => {
     return {
-        user: state.user.user
+        user: state.user.user,
+        loading: state.user.loadingAuth
     }
 }
 
