@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from "react";
 import {InjectedFormProps, reduxForm, Field} from "redux-form";
 import {compose} from "redux";
-import {Redirect, withRouter} from "react-router";
+import { withRouter} from "react-router";
 import {connect} from "react-redux";
 import {
-    getNewsCategoryListThunk, getNewsCurrentUserListThunk,
+    getNewsCategoryListThunk,
     newsCategoryListType, updateNewsThunk
 } from "../redux/reducers/news-reduser";
 import {AppStateType} from "../redux/redux";
@@ -25,7 +25,6 @@ type FormType = {
 }
 let EditFormForm: React.FC<InjectedFormProps<FormType, mapStateToPropsType> & mapStateToPropsType> = ({
                                                                                                           handleSubmit,
-                                                                                                          getNewsAllListThunk,
                                                                                                           newsAll,
                                                                                                           categories,
                                                                                                           getNewsCategoryListThunk,
@@ -34,7 +33,9 @@ let EditFormForm: React.FC<InjectedFormProps<FormType, mapStateToPropsType> & ma
                                                                                                           handleFileChange,
                                                                                                           clearImg,
                                                                                                           initialize,
-                                                                                                          setSrc
+                                                                                                          setSrc,
+                                                                                                          loading
+
                                                                                                       }) => {
 
     let [selectedId, setTtt]: any = useState('')
@@ -56,9 +57,13 @@ let EditFormForm: React.FC<InjectedFormProps<FormType, mapStateToPropsType> & ma
                 prevue: selectedNewsState.prevue,
                 categoriesid: selectedNewsState.categoriesid
             })
+
             setSrc(selectedNewsState.imageSrc)
+
         }
     }, [selectedId, selectedNewsState])
+
+
 
 
     return (<form style={{marginLeft: 10}} onSubmit={handleSubmit}>
@@ -113,7 +118,7 @@ let EditFormForm: React.FC<InjectedFormProps<FormType, mapStateToPropsType> & ma
                             onClick={clearImg}>Clear</Button></div>}
                     </FormControl> : ''}
             </div>
-            <Button type="submit" disabled={!selectedId} variant="contained"> sss</Button>
+            <Button type="submit" disabled={!selectedId ||  loading} variant="contained"> sss</Button>
         </form>
 
     )
@@ -128,7 +133,7 @@ let Edit: React.FC<FormType & mapStateToPropsType> = (props) => {
     let [file, setFile] = useState(null)
     let handleFileChange = (event: any) => {
         const fileUploaded = event.target.files[0];
-        setFile(fileUploaded)
+            setFile(fileUploaded)
         if (src !== null) {
             let reader: any = new FileReader();
             reader.readAsDataURL(fileUploaded)
@@ -148,7 +153,7 @@ let Edit: React.FC<FormType & mapStateToPropsType> = (props) => {
     }
 
     let submit = (formData: any) => {
-        props.updateNewsThunk(selectedId, formData, file)
+        props.updateNewsThunk(selectedId, formData, file, props.user.id)
     }
     return (
 
@@ -168,13 +173,14 @@ type mapStateToPropsType = {
     categories: Array<newsCategoryListType>
     getNewsCategoryListThunk: () => void
     selectedIdValue: (value: any) => void
-    updateNewsThunk: (newsNameId: any, data: any, file: any) => void
+    updateNewsThunk: (newsNameId: any, data: any, file: any , CurrentUserId:any) => void
     src: any
     handleFileChange: () => void
     clearImg: () => void
     user: any
     news: any
     setSrc: (val: any) => void
+    loading: boolean
 }
 
 let mapStateToProps = (state: AppStateType) => {
@@ -182,6 +188,7 @@ let mapStateToProps = (state: AppStateType) => {
         newsAll: state.news.newsAll,
         categories: state.news.newsCategoryList,
         user: state.user.user,
+        loading: state.user.loadingAuth,
     }
 
 }

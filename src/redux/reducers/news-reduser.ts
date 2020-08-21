@@ -10,6 +10,7 @@ import {
     comment,
     setComment, deleteComment
 } from "../../api";
+import {setAuthUserError, setLoadingAuth} from "./user";
 
 
 let GET_NEWS_CATEGORIES_LIST = "GET_NEWS_CATEGORIES_LIST"
@@ -23,6 +24,8 @@ let COMMENT = "COMMENT"
 let SET_COMMENT = "SET_COMMENT"
 let LOADING = "LOADING"
 let DELL_COMMENT = "DELL_COMMENT"
+let DELL_LIKE = "DELL_LIKE"
+let LIKE = "LIKE"
 
 
 export type newsCategoryListType = {
@@ -34,6 +37,7 @@ export type newsCategoryListType = {
 type comment = {
     body: string
     userId: string
+    commentId: string
 }
 
 type newsType = {
@@ -42,19 +46,17 @@ type newsType = {
     categoriesid: string
     prevue: string
     likes: Array<string>
-
-
 }
 let initialState = {
     newsCategoryList: [] as Array<newsCategoryListType>,
     news: [] as Array<newsType>,
     categoriesid: '' as string,
-    singleNews: [] as Array<newsType>,
+    singleNews: {} as newsType,
     newsAll: [] as Array<newsType>,
     likedNews: [] as Array<newsType>,
     success: false,
     comments: [] as Array<comment>,
-    loading:false
+    loading: false
 }
 
 const newsRedus = (state = initialState, action: any) => {
@@ -100,28 +102,48 @@ const newsRedus = (state = initialState, action: any) => {
                 comments: action.comments
             }
 
-            case LOADING:
+        case LOADING:
             return {
                 ...state,
                 loading: action.loading
             }
 
         case SET_COMMENT:
-            return  Object.assign({}, state, {
+            return Object.assign({}, state, {
                 comments: [
                     action.comments,
                     ...state.comments,
-
-
                 ]
             })
+
         case DELL_COMMENT:
             return {
                 ...state,
-                ...state.comments.filter((item:any) => !action.commentId.includes(item.id))
+                comments: state.comments.filter((item: any) => item.id !== action.payloadId)
             }
+        //
+        case DELL_LIKE:
+            let arr = state.singleNews.likes.filter((item:any )=> item !== action.payloadId)
+         return {
+                ...state,
+            singleNews: {
+                ...state.singleNews,
+                likes: arr
 
+                ,
 
+            }
+         }
+
+        case LIKE:
+            return {
+                ...state,
+                singleNews: {
+                    ...state.singleNews,
+                    likes: state.singleNews.likes.concat(action.like)
+
+                }
+            }
 
         default:
             return state
@@ -136,7 +158,7 @@ type newsCategoryListReduserType = {
 
 export let newsCategoryList = (newsCategoryList: newsCategoryListType): newsCategoryListReduserType => ({
     type: GET_NEWS_CATEGORIES_LIST,
-    newsCategoryList
+    newsCategoryList: newsCategoryList
 })
 
 
@@ -153,7 +175,11 @@ export let setLoading = (loading: boolean) => ({type: LOADING, loading})
 
 export let setComments = (comments: any) => ({type: SET_COMMENT, comments})
 
-export let deleteComments = (commentId: any) => ({type: SET_COMMENT, commentId})
+export let setLike = (like: any) => ({type: LIKE, like})
+
+export let deleteComments = (payloadId: any) => ({type: DELL_COMMENT, payloadId})
+
+export let deleteLike = (payloadId: any) => ({type: DELL_LIKE, payloadId})
 
 type getLikedNewstype = {
     type: typeof GET_LIKED_NEWS
@@ -197,18 +223,15 @@ export let getListThunk = (whereId: any, categoryId: any, limit: number) => (dis
         .then(res => dispatch(getNews(res)))
 }
 
-export let  getNewsThunk = (newsNameId: any) =>  (dispatch: any) => {
-   getNewses("News", newsNameId)
+export let getNewsThunk = (newsNameId: any) => (dispatch: any) => {
+    getNewses("News", newsNameId)
         .then(res => (
             dispatch(singleNews(res)))
         )
 }
 export let getNewsCurrentUserListThunk = (CurrentUserId: any) => (dispatch: any) => {
     getNewsCurrentUserList(CurrentUserId)
-        .then(res => (
-            // console.log(res),
-            dispatch(getAllNews(res)))
-        )
+        .then(res => (dispatch(getAllNews(res))))
 }
 export let getNewsAllListThunk = () => (dispatch: any) => {
     get("News",)
@@ -216,60 +239,94 @@ export let getNewsAllListThunk = () => (dispatch: any) => {
             dispatch(getAllNews(res))))
 }
 
-export let updateNewsThunk = (newsNameId: any, data: any, imgSrc: any) => () => {
-    updateNewses("News", newsNameId, data, imgSrc)
-        .then(() => {
-                console.log("ThunkSucces")
-            }
-        )
+export let updateNewsThunk = (newsNameId: any, data: any, imgSrc: any, CurrentUserId: any) => async (dispatch: any) => {
+    try {
+        dispatch(setLoadingAuth(true))
+        await updateNewses("News", newsNameId, data, imgSrc)
+            .then(() => {
+                    dispatch(setLoadingAuth(false))
+                    getNewsCurrentUserList(CurrentUserId)
+                        .then(res => (dispatch(getAllNews(res))))
+                }
+            )
+    } catch (e) {
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+        dispatch(setLoadingAuth(false))
+    }
 }
 
-export let Likes =  (doc: any, arrayUnion: any, add: any) => async  (dispatch: any) => {
-
-   await likes("News", doc, arrayUnion, add)
-        dispatch(getNewsThunk(doc)
-
-
-)
+export let Likes = (doc: any, arrayUnion: any, add: any) => async (dispatch: any) => {
+    try {
+        await likes("News", doc, arrayUnion, add)
+        if(add == true) {
+            dispatch(setLike(arrayUnion))
+        }else{
+            dispatch(deleteLike(arrayUnion))
+        }
+    } catch (e) {
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+        dispatch(setLoadingAuth(false))
+    }
 }
-export let AddNews = (news: any, imgSrc: any) => (dispatch: any) => {
-    addNews(news, imgSrc).then(r => {
-        dispatch(setSuccess())
-        console.log(r)
-
-    })
+export let AddNews = (news: any, imgSrc: any) => async (dispatch: any) => {
+    try {
+        await addNews(news, imgSrc).then(() => {
+            dispatch(setSuccess())
+        })
+    } catch (e) {
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+        dispatch(setLoadingAuth(false))
+    }
 
 }
 
-export let getLiked = (uid: any) => (dispatch: any) => {
-    liked(uid).then((r: any) => {
+export let getLiked = (uid: any) => async (dispatch: any) => {
+    try {
+        await liked(uid).then((r: any) => {
             dispatch(getLikedNews(r))
-
-        }
-    )
+        })
+    } catch (e) {
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+        dispatch(setLoadingAuth(false))
+    }
 }
-export let getCommentThunk = (newsId: any , limit:number) => (dispatch: any) => {
-    comment(newsId, limit).then(r =>
-        dispatch(getComments(r)),
-    )
-}
-
-export let setCommentThunk = (newsId: any, data: any) => (dispatch: any) => {
-    setComment(newsId, data).then(() => {
-            dispatch(setComments(data))
-        }
-    )
-}
-export let deleteCommentThunk = (newsId: any, commentId: any , limit: number) => (dispatch: any) => {
-
-    deleteComment(newsId, commentId).then(r => {
-            console.log(r, "respons")
-        // dispatch(deleteComments(commentId))
-        dispatch(getCommentThunk(newsId , limit))
-        }
-    )
+export let getCommentThunk = (newsId: any, limit: number) => async (dispatch: any) => {
+    try {
+        await comment(newsId, limit).then(r =>
+            dispatch(getComments(r)))
+    } catch (e) {
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+        dispatch(setLoadingAuth(false))
+    }
 }
 
-
+export let setCommentThunk = (newsId: any, data: any) => async (dispatch: any) => {
+    try {
+        await setComment(newsId, data)
+            .then(() => {
+                dispatch(setComments(data))
+            })
+    } catch (e) {
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+        dispatch(setLoadingAuth(false))
+    }
+}
+export let deleteCommentThunk = (newsId: any, commentId: any) => async (dispatch: any) => {
+    try {
+        await deleteComment(newsId, commentId).then(() => {
+            dispatch(deleteComments(commentId))
+        })
+    } catch (e) {
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+        dispatch(setLoadingAuth(false))
+    }
+}
 export default newsRedus
 

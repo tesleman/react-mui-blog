@@ -102,10 +102,8 @@ export let SelfCard: React.FC<any> = (props) => {
                                 likes={n.likes}
                                 imageSrc={n.imageSrc}
                                 user={props.user}
-
                     />
                 )) : ''}
-
             </Grid>
         </Container>
 

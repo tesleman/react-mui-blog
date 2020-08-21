@@ -7,13 +7,17 @@ import * as serviceWorker from './serviceWorker';
 import store from "./redux/redux";
 import {Provider} from "react-redux";
 import 'fontsource-roboto';
+import {SnackbarProvider} from "notistack";
 
 
 ReactDOM.render(
     <BrowserRouter>
         <Provider store={store}>
+            <SnackbarProvider maxSnack={3}>
             <App/>
+            </SnackbarProvider>
         </Provider>
+
     </BrowserRouter>,
 
     document.getElementById('root')

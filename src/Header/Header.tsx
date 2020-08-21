@@ -36,10 +36,7 @@ type RouteProps = {
 
 const Header: React.FC<RouteComponentProps<RouteProps>& any> = (props) => {
     const classes = useStyles();
- // console.log(props.user)
-// let some = () =>{
-//     props.history.push("/")
-// }
+
     return (
         <React.Fragment>
             <Toolbar>

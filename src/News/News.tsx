@@ -64,29 +64,27 @@ let News: React.FC<RouteComponentProps<any> & any> = (props) => {
     const [limit, setLikeUpd] = useState(2);
     const [commentState, setCommentState] = useState('');
 
-
     let memo = useCallback(() => props.getAuthorsThunk(), [props.authorsstate.length])
-
 
     useEffect(() => {
         memo()
     }, [])
 
 
+
     useEffect(() => {
         props.getCommentThunk(props.match.params.id, limit)
-        console.log(props.comment)
     }, [props.singleNews.id, limit, props.comment.length])
 
     useEffect(() => {
         props.getNewsThunk(props.match.params.id)
+        console.log(props.singleNews)
     }, [props.match.params.id])
 
     useEffect(() => {
         if (props.singleNews.userId)
             props.getAuthor(props.singleNews.userId)
     }, [props.singleNews.userId])
-console.log(props.comment)
 
     let onHandleSubmit = () => {
         let date = new Date()
@@ -96,10 +94,12 @@ console.log(props.comment)
             data: date.toLocaleString(),
         }
         props.setCommentThunk(props.singleNews.id, data)
+        setCommentState('')
     }
-
     let likes = (add: any) => {
-        props.Likes(props.singleNews.id, props.user.id, add)
+        if(props.user.id) {
+            props.Likes(props.singleNews.id, props.user.id, add)
+        }
     }
 
 
@@ -124,7 +124,7 @@ console.log(props.comment)
                                 </Badge> : <Badge style={{cursor: "pointer"}} onClick={() => likes(true)}
                                                   badgeContent={props.singleNews.likes.length}
                                                   color="primary"><FavoriteBorderIcon/>
-                                </Badge>) : console.log("else Budg")}
+                                </Badge>) : ""}
 
                         </div>
                     </Grid>
@@ -141,9 +141,7 @@ console.log(props.comment)
                                 <Avatar alt="Cindy Baker" src={props.author.photo}/>
                             </IconButton>
                         </NavLink>
-                        <Typography style={{
-                            color: "white"
-                        }} variant="subtitle2" color="inherit" paragraph>
+                        <Typography  variant="subtitle2" color="inherit" paragraph>
                             {props.author.name}
                         </Typography>
 
@@ -161,7 +159,7 @@ console.log(props.comment)
             }>
                 <Grid item md={5}>
                     <Grid item md={5}>
-                        <TextareaAutosize onChange={((event) => setCommentState(event.target.value))}
+                        <TextareaAutosize value={commentState} onChange={((event) => setCommentState(event.target.value))}
                                           aria-label="empty textarea" rowsMin={3} placeholder="Empty"/>
                     </Grid>
                     <Grid item md={5}>

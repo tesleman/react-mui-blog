@@ -24,8 +24,6 @@ let initialState = {
     },
     authorsstate: [] as Array<any>,
     error: ""
-
-
 }
 
 const user = (state = initialState, action: any) => {
@@ -72,6 +70,10 @@ let setCurrentUser = (user: any) => ({
     type: SET_USER,
     user
 })
+export let setAuthUserError = (error: any) => ({
+    type: SET_AUTH_ERROR,
+    error
+})
 let setAuthor = (author: any) => ({
     type: SET_AUTHOR,
     author
@@ -84,21 +86,26 @@ let setLoading = (loading: boolean) => ({
     type: SET_LOADING,
     loading
 })
-let setLoadingAuth = (loadingAuth: boolean) => ({
+export let setLoadingAuth = (loadingAuth: boolean) => ({
     type: SET_LOADING_AUTH,
     loadingAuth
 })
 
 export let currentUserThunk = () => async (dispatch: any) => {
-    let user = await curentUser()
-    if (user != null) {
-        dispatch(setLoading(true))
-        dispatch(setCurrentUser({id: user.uid, name: user.displayName, photoURL: user.photoURL}))
-        dispatch(setLoading(false))
-    } else {
-        dispatch(setCurrentUser({id: '', name: '', photoURL: ''}))
-        dispatch(setLoading(false))
-    }
+  try {
+      let user = await curentUser()
+      if (user != null) {
+          dispatch(setLoading(true))
+          dispatch(setCurrentUser({id: user.uid, name: user.displayName, photoURL: user.photoURL}))
+          dispatch(setLoading(false))
+      } else {
+          dispatch(setCurrentUser({id: '', name: '', photoURL: ''}))
+          dispatch(setLoading(false))
+      }}catch (e) {
+          dispatch(setAuthUserError(e.message))
+          dispatch(setAuthUserError(""))
+      }
+
 }
 
 export let getCurrentUserThunk = () => (dispatch: any) => {
@@ -107,18 +114,24 @@ export let getCurrentUserThunk = () => (dispatch: any) => {
     })
 }
 export let getAuthor = (id: any) => async (dispatch: any) => {
-    author(id)
-        .then(response => {
-            response.docs.forEach(m => {
-                dispatch(setAuthor(m.data()))
-            });
+    try {
+        let response = await author(id)
+        response.docs.forEach(m => {
+            dispatch(setAuthor(m.data()))
         })
+    } catch (e) {
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+    }
 }
 export let getAuthorsThunk = () => async (dispatch: any) => {
-    authors()
-        .then(response =>
-            dispatch(setAuthors(response))
-        )
+    try {
+        await authors()
+            .then(response => dispatch(setAuthors(response)))
+    } catch (e) {
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+    }
 }
 
 export let loginThunk = (login: any, password: any) => async (dispatch: any) => {
@@ -128,7 +141,10 @@ export let loginThunk = (login: any, password: any) => async (dispatch: any) => 
         dispatch(setLoadingAuth(false))
         dispatch(setCurrentUser({id: t.user.uid, name: t.user.displayName, photoURL: t.user.photoURL}))
     } catch (e) {
-        console.log(e)
+        dispatch(setLoadingAuth(true))
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+        dispatch(setLoadingAuth(false))
     }
 
 
@@ -139,19 +155,17 @@ export let logoutThunk = () => async (dispatch: any) => {
 }
 
 
-export let registrationThunk = (login: any, password: any, name: string) => async () => {
-
-    let ss = await reg(login, password, name).catch(function (error) {
-        let errorCode = error.code;
-        let errorMessage = error.message;
-        console.log(errorCode)
-        console.log(errorMessage)
-        return error
-        // An error happened.
-    })
-    console.log(ss + "ss")
-
-
+export let registrationThunk = (login: any, password: any, name: string) => async (dispatch: any) => {
+    try {
+        dispatch(setLoadingAuth(true))
+        await reg(login, password, name)
+        dispatch(setLoadingAuth(false))
+    } catch (e) {
+        dispatch(setLoadingAuth(true))
+        dispatch(setAuthUserError(e.message))
+        dispatch(setAuthUserError(""))
+        dispatch(setLoadingAuth(false))
+    }
 }
 
 

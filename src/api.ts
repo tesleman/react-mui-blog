@@ -62,11 +62,11 @@ export function getNewses(collection: any, newsNameId: any) {
     return db.collection(collection).doc(newsNameId)
         .get()
         .then(response => {
-            let news = {
+            return  {
                 id: newsNameId,
                 ...response.data()
             }
-            return news
+
         })
 
 }
@@ -77,13 +77,13 @@ export async function updateNewses(collection: any, newsNameId: any, data: any, 
         .update({
             ...data
         })
-    let fileData = await firebase.storage().ref(`records/${newsNameId}`).put(imgSrc)
-
-    let imageSrc = await fileData.ref.getDownloadURL();
-    // console.log(imageSrc)
-    await db.collection('News').doc(`${newsNameId}`).update({
-        imageSrc
-    })
+    if(imgSrc) {
+        let fileData = await firebase.storage().ref(`records/${newsNameId}`).put(imgSrc)
+        let imageSrc = await fileData.ref.getDownloadURL();
+        await db.collection('News').doc(`${newsNameId}`).update({
+            imageSrc
+        })
+    }
     return colect
         .then(() => console.log("Succes"))
         .catch(function (error) {
@@ -94,7 +94,7 @@ export async function updateNewses(collection: any, newsNameId: any, data: any, 
 
 export function auth(login: any, password: any): any {
     return firebase.auth().signInWithEmailAndPassword(login, password)
-        .catch((error => console.log(error)))
+
 }
 
 
@@ -131,16 +131,18 @@ export function initAuth(onAuth: any) {
 
 
 export async function curentUser() {
-    let ss = await firebase.auth().currentUser
-    return ss
+    try{
+        return await firebase.auth().currentUser
+    }catch (e) {
+        console.log(e)
+    }
+
 
 }
 
 
 export function f() {
     let user = firebase.auth().currentUser
-
-
     if (user != null) user.updateProfile({
         displayName: "Jane Q. User",
         photoURL: "https://images.unsplash.com/photo-1596807949858-58c2cb076fad"
@@ -156,10 +158,10 @@ export async function  likes(collection: any, doc: any, arrayUnion: any, add: an
     let washingtonRef = await db.collection(collection).doc(doc);
     add ? await washingtonRef.update({
             likes: firebase.firestore.FieldValue.arrayUnion(arrayUnion)
-        }).then(r => console.log(r, " Union LikeResponse")).catch( (error)=>console.log(error) ) :
+        }).then().catch( (error)=>console.log(error) ) :
         await washingtonRef.update({
             likes: firebase.firestore.FieldValue.arrayRemove(arrayUnion)
-        }).then(r => console.log(r, " Remove LikeResponse")).catch( (error)=>console.log(error) )
+        }).then().catch( (error)=>console.log(error) )
 
 }
 
@@ -211,7 +213,7 @@ export async function authors() {
           let mm:any =  response.docs.map(m => ({
                 ...m.data()
             }));
-            console.log(mm, "mm")
+
           return mm
         })
 }
@@ -224,7 +226,6 @@ export async function comment(newsId:any, limit: number) {
                id: m.id,
                ...m.data()
            }));
-
            return news
        })
 

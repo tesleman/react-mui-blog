@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect} from "react";
 import {connect} from "react-redux";
 import {AppStateType} from "../redux/redux";
 import {Button, Grid} from "@material-ui/core";
@@ -9,6 +9,7 @@ import {email, minValue, required} from "../validation/validators";
 import {registrationThunk} from "../redux/reducers/user";
 import {Redirect} from "react-router";
 import {Link} from "react-router-dom";
+import {useSnackbar} from "notistack";
 
 
 type FormType = {
@@ -17,8 +18,9 @@ type FormType = {
     Name: string
 }
 
+let minLenght = minValue(6)
 let RegistrationFields: React.FC<InjectedFormProps<FormType>> = (props) => {
-    let minLenght = minValue(6)
+
     return (
         <form onSubmit={props.handleSubmit} style={{marginTop: 20}}>
             <Grid item xs={6}>
@@ -83,9 +85,16 @@ let EditForm = reduxForm<FormType>({form: 'edit',})(RegistrationFields)
 
 
 let Registration: React.FC<any> = (props) => {
+
+    const { enqueueSnackbar } = useSnackbar();
+
+    useEffect(()=>{
+        if(props.error)
+            enqueueSnackbar(props.error)
+    }, [props.error])
+
     let sub = (formData: any) => {
         props.registrationThunk(formData.email, formData.password, formData.name)
-        console.log(formData)
     }
 
     return (props.user.id ? <Redirect to="/"/> : <div>
@@ -100,7 +109,8 @@ let Registration: React.FC<any> = (props) => {
 
 let mapStateToProps = (state: AppStateType) => {
     return {
-        user: state.user.user
+        user: state.user.user,
+        error: state.user.error
     }
 }
 
